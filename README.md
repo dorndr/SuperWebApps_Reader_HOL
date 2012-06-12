@@ -21,16 +21,18 @@ Who Should Attend This Training
 -------------------------------
 Web developers who are comfortable creating interactive web experiences and want to use HTML5, CSS3 and the latest web development techniques to create modern web applications with great user experiences.
 
-Time Commitment
----------------
-Lecture Time: 3 hours
-Exercises & Hands On Work: 4 hours
-Total: 7.00 hours
+Time Commitment & research
+-------------------------
+Lecture Time: 6 hours
+Exercises & Hands On Work: 6 hours
+Total: 12.00 hours
 
 Prerequisites
 -------------
-* Students should feel comfortable with HTML4, CSS2.1 and functional JavaScript
+* Students should feel comfortable with HTML, CSS2.1 and functional JavaScript
 * Some experience building web applications
 * Experience with object oriented programming is strongly recommended
 * Knowledge of Ajax design patterns
 * Ability to quickly deploy code to a web server
+* Knowledge of WebService & DataService
+
