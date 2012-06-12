@@ -1,11 +1,11 @@
 /**
  * Lawnchair!
- * --- 
- * clientside json store 
+ * ---
+ * clientside json store
  *
  */
 var Lawnchair = function () {
-    // lawnchair requires json 
+    // lawnchair requires json
     if (!JSON) throw 'JSON unavailable! Include http://www.json.org/json2.js to fix.'
     // options are optional; callback is not
     if (arguments.length <= 2 && arguments.length > 0) {
@@ -16,16 +16,16 @@ var Lawnchair = function () {
     }
     // TODO perhaps allow for pub/sub instead?
     if (typeof callback !== 'function') throw 'No callback was provided';
-    
+
     // ensure we init with this set to the Lawnchair prototype
     var self = (!(this instanceof Lawnchair))
              ? new Lawnchair(options, callback)
              : this
 
-    // default configuration 
+    // default configuration
     self.record = options.record || 'record'  // default for records
     self.name   = options.name   || 'records' // default name for underlying store
-    
+
     // mixin first valid  adapter
     var adapter
     // if the adapter is passed in we try to load that only
@@ -33,35 +33,35 @@ var Lawnchair = function () {
         adapter = Lawnchair.adapters[self.indexOf(Lawnchair.adapters, options.adapter)]
         adapter = adapter.valid() ? adapter : undefined
     // otherwise find the first valid adapter for this env
-    } 
+    }
     else {
         for (var i = 0, l = Lawnchair.adapters.length; i < l; i++) {
             adapter = Lawnchair.adapters[i].valid() ? Lawnchair.adapters[i] : undefined
-            if (adapter) break 
+            if (adapter) break
         }
-    } 
-    
-    // we have failed 
-    if (!adapter) throw 'No valid adapter.' 
-    
-    // yay! mixin the adapter 
-    for (var j in adapter)  
+    }
+
+    // we have failed
+    if (!adapter) throw 'No valid adapter.'
+
+    // yay! mixin the adapter
+    for (var j in adapter)
         self[j] = adapter[j]
-    
+
     // call init for each mixed in plugin
-    for (var i = 0, l = Lawnchair.plugins.length; i < l; i++) 
+    for (var i = 0, l = Lawnchair.plugins.length; i < l; i++)
         Lawnchair.plugins[i].call(self)
 
-    // init the adapter 
+    // init the adapter
     self.init(options, callback)
 
     // called as a function or as a ctor with new always return an instance
     return self
 }
 
-Lawnchair.adapters = [] 
+Lawnchair.adapters = []
 
-/** 
+/**
  * queues an adapter for mixin
  * ===
  * - ensures an adapter conforms to a specific interface
@@ -71,14 +71,14 @@ Lawnchair.adapter = function (id, obj) {
     // add the adapter id to the adapter obj
     // ugly here for a  cleaner dsl for implementing adapters
     obj['adapter'] = id
-    // methods required to implement a lawnchair adapter 
+    // methods required to implement a lawnchair adapter
     var implementing = 'adapter valid init keys save batch get exists all remove nuke'.split(' ')
     ,   indexOf = this.prototype.indexOf
-    // mix in the adapter 	
+    // mix in the adapter
     for (var i in obj) {
         if (indexOf(implementing, i) === -1) throw 'Invalid adapter! Nonstandard method: ' + i
     }
-    // if we made it this far the adapter interface is valid 
+    // if we made it this far the adapter interface is valid
 	// insert the new adapter as the preferred adapter
 	Lawnchair.adapters.splice(0,0,obj)
 }
@@ -88,11 +88,11 @@ Lawnchair.plugins = []
 /**
  * generic shallow extension for plugins
  * ===
- * - if an init method is found it registers it to be called when the lawnchair is inited 
+ * - if an init method is found it registers it to be called when the lawnchair is inited
  * - yes we could use hasOwnProp but nobody here is an asshole
- */ 
+ */
 Lawnchair.plugin = function (obj) {
-    for (var i in obj) 
+    for (var i in obj)
         i === 'init' ? Lawnchair.plugins.push(obj[i]) : this.prototype[i] = obj[i]
 }
 
@@ -103,7 +103,7 @@ Lawnchair.plugin = function (obj) {
 Lawnchair.prototype = {
 
     isArray: Array.isArray || function(o) { return Object.prototype.toString.call(o) === '[object Array]' },
-    
+
     /**
      * this code exists for ie8... for more background see:
      * http://www.flickr.com/photos/westcoastlogic/5955365742/in/photostream
@@ -138,9 +138,9 @@ Lawnchair.prototype = {
         var cb = this.lambda(callback)
         // iterate from chain
         if (this.__results) {
-            for (var i = 0, l = this.__results.length; i < l; i++) cb.call(this, this.__results[i], i) 
-        }  
-        // otherwise iterate the entire collection 
+            for (var i = 0, l = this.__results.length; i < l; i++) cb.call(this, this.__results[i], i)
+        }
+        // otherwise iterate the entire collection
         else {
             this.all(function(r) {
                 for (var i = 0, l = r.length; i < l; i++) cb.call(this, r[i], i)
@@ -151,20 +151,20 @@ Lawnchair.prototype = {
 // --
 };
 /**
- * dom storage adapter 
- * === 
+ * dom storage adapter
+ * ===
  * - originally authored by Joseph Pecoraro
  *
- */ 
+ */
 //
 // TODO does it make sense to be chainable all over the place?
-// chainable: nuke, remove, all, get, save, all    
+// chainable: nuke, remove, all, get, save, all
 // not chainable: valid, keys
 //
 Lawnchair.adapter('dom', {
-    // ensure we are in an env with localStorage 
+    // ensure we are in an env with localStorage
     valid: function () {
-        return !!window.Storage 
+        return !!window.Storage
     },
 
 	init: function (options, callback) {
@@ -201,20 +201,20 @@ Lawnchair.adapter('dom', {
             find: function (key) {
                 var a = this.all()
                 for (var i = 0, l = a.length; i < l; i++) {
-                    if (key === a[i]) return i 
+                    if (key === a[i]) return i
                 }
                 return false
             }
         }
 
-        if (callback) this.fn(this.name, callback).call(this, this)  
+        if (callback) this.fn(this.name, callback).call(this, this)
 	},
-	
+
     save: function (obj, callback) {
 		var key = obj.key || this.uuid()
         // if the key is not in the index push it on
         if (!this.indexer.find(key)) this.indexer.add(key)
-	    // now we kil the key and use it in the store colleciton	
+	    // now we kil the key and use it in the store colleciton
         delete obj.key;
 		this.storage.setItem(key, JSON.stringify(obj))
 		if (callback) {
@@ -235,7 +235,7 @@ Lawnchair.adapter('dom', {
         if (callback) this.lambda(callback).call(this, saved)
         return this
     },
-   
+
     // accepts [options], callback
     keys: function() {
         // TODO support limit/offset options here
@@ -243,7 +243,7 @@ Lawnchair.adapter('dom', {
         ,   offset = options.offset || 0
         if (callback) this.lambda(callback).call(this, this.indexer.all())
     },
-    
+
     get: function (key, callback) {
         if (this.isArray(key)) {
             var r = []
@@ -252,7 +252,7 @@ Lawnchair.adapter('dom', {
                 if (obj) {
                     obj.key = key[i]
                     r.push(obj)
-                } 
+                }
             }
             if (callback) this.lambda(callback).call(this, r)
         } else {
@@ -276,7 +276,7 @@ Lawnchair.adapter('dom', {
 		if (callback) this.fn(this.name, callback).call(this, r)
         return this
 	},
-	
+
     remove: function (keyOrObj, callback) {
         var key = typeof keyOrObj === 'string' ? keyOrObj : keyOrObj.key
         this.indexer.del(key)
@@ -284,7 +284,7 @@ Lawnchair.adapter('dom', {
 		if (callback) this.lambda(callback).call(this)
         return this
 	},
-	
+
     nuke: function (callback) {
 		this.all(function(r) {
 			for (var i = 0, l = r.length; i < l; i++) {
@@ -292,7 +292,7 @@ Lawnchair.adapter('dom', {
 			}
 			if (callback) this.lambda(callback).call(this)
 		})
-        return this 
+        return this
 	}
 });
 // window.name code courtesy Remy Sharp: http://24ways.org/2009/breaking-out-the-edges-of-the-browser
@@ -303,7 +303,7 @@ Lawnchair.adapter('window-name', (function(index, store) {
     return {
 
         valid: function () {
-            return typeof window.top.name != 'undefined' 
+            return typeof window.top.name != 'undefined'
         },
 
         init: function (options, callback) {
@@ -322,7 +322,7 @@ Lawnchair.adapter('window-name', (function(index, store) {
             // data[key] = value + ''; // force to string
             // window.top.name = JSON.stringify(data);
             var key = obj.key || this.uuid()
-            if (obj.key) delete obj.key 
+            if (obj.key) delete obj.key
             this.exists(key, function(exists) {
                 if (!exists) index.push(key)
                 store[key] = obj
@@ -345,22 +345,22 @@ Lawnchair.adapter('window-name', (function(index, store) {
             if (cb) this.lambda(cb).call(this, r)
             return this
         },
-        
+
         get: function (keyOrArray, cb) {
             var r;
             if (this.isArray(keyOrArray)) {
                 r = []
                 for (var i = 0, l = keyOrArray.length; i < l; i++) {
-                    r.push(store[keyOrArray[i]]) 
+                    r.push(store[keyOrArray[i]])
                 }
             } else {
                 r = store[keyOrArray]
                 if (r) r.key = keyOrArray
             }
             if (cb) this.lambda(cb).call(this, r)
-            return this 
+            return this
         },
-        
+
         exists: function (key, cb) {
             this.lambda(cb).call(this, !!(store[key]))
             return this
@@ -376,7 +376,7 @@ Lawnchair.adapter('window-name', (function(index, store) {
             this.fn(this.name, cb).call(this, r)
             return this
         },
-        
+
 		remove: function (keyOrArray, cb) {
             var del = this.isArray(keyOrArray) ? keyOrArray : [keyOrArray]
             for (var i = 0, l = del.length; i < l; i++) {
@@ -393,8 +393,8 @@ Lawnchair.adapter('window-name', (function(index, store) {
             index = []
             window.top.name = JSON.stringify(data)
             if (cb) this.lambda(cb).call(this)
-            return this 
+            return this
         }
     }
 /////
-})())
+})());

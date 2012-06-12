@@ -1,22 +1,6 @@
 
 // Create or open the data store where objects are stored for offline use
-var store = new Lawnchair({name: 'entries', record: 'entry'}, function() {
-  //TODO: this should probably go in the item store
-  this.toggleRead = function(key, value) {
-    this.get(key, function(entry) {
-      entry.read = value;
-      this.save(entry);
-    });
-  };
-
-  //TODO: this should probably go in the item store
-  this.toggleStar = function(key, value) {
-    this.get(key, function(entry) {
-      entry.starred = value;
-      this.save(entry);
-    });
-  };
-});
+var store = new Lawnchair({name: 'entries', record: 'entry'}, function() {});
 
 
 // Create the all up Ember application
@@ -25,14 +9,27 @@ var SuperWebApp_Reader = Em.Application.create({
     // Call the superclass's `ready` method.
     this._super();
 
-    //On mobile devices, hide the address bar
-    window.scrollTo(0);
-
-    // Load items from the local data store first
     SuperWebApp_Reader.GetItemsFromDataStore();
+    document.addEventListener('keydown', handleBodyKeyDown, false);
   }
 });
 
+// Ember Object model for entry items
+SuperWebApp_Reader.Item = Em.Object.extend({
+  //TODO:
+
+  read: false,
+  starred: false,
+  item_id: null,
+  title: null,
+  pub_name: null,
+  pub_author: null,
+  pub_date: new Date(0),
+  short_desc: null,
+  content: null,
+  feed_link: null,
+  item_link: null
+});
 
 SuperWebApp_Reader.GetItemsFromDataStore = function() {
   // Get all items from the local data store.
@@ -44,36 +41,36 @@ SuperWebApp_Reader.GetItemsFromDataStore = function() {
     arr.forEach( function(entry) {
       var item = SuperWebApp_Reader.Item.create(entry);
       SuperWebApp_Reader.dataController.addItem(item);
-		});
+    });
     console.log("Entries loaded from local data store:", arr.length);
 
     // Set the default view to any unread items
-		SuperWebApp_Reader.itemsController.showDefault();
+    SuperWebApp_Reader.itemsController.showDefault();
 
     // Load items from the server after we've loaded everything from
     //  the local data store
     SuperWebApp_Reader.GetItemsFromServer();
-	});
+  });
 };
 
-
 SuperWebApp_Reader.GetItemsFromServer = function() {
+  $(".icon-refresh").addClass("spin");
   // URL to data feed that I plan to consume
-  //var feedURL = "http://rss.news.yahoo.com/rss/topstories";
   var feed = "http://blog.chromium.org/feeds/posts/default?alt=rss";
   feed = encodeURIComponent(feed);
 
   // Feed parser that supports CORS and returns data as a JSON string
   var feedPipeURL = "http://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20xml%20where%20url%3D'";
   feedPipeURL += feed + "'&format=json";
-  //var feedPipeURL = "https://ajax.googleapis.com/ajax/services/feed/load?v=1.0&q=";
-  //feedPipeURL += feed;
 
   console.log("Starting AJAX Request:", feedPipeURL);
 
   $.ajax({
     url: feedPipeURL,
     dataType: 'json',
+    complete: function() {
+      $(".icon-refresh").removeClass("spin");
+    },
     success: function(data) {
       // Get the items object from the result
       var items = data.query.results.rss.channel.item;
@@ -122,82 +119,9 @@ SuperWebApp_Reader.GetItemsFromServer = function() {
 
       // Refresh the visible items
       SuperWebApp_Reader.itemsController.showDefault();
-      console.log("Entries successfully updated from server.");
-
     }
   });
 };
-
-// Ember Object model for entry items
-SuperWebApp_Reader.Item = Em.Object.extend({
-  read: false,
-  starred: false,
-  item_id: null,
-  title: null,
-  pub_name: null,
-  pub_author: null,
-  pub_date: new Date(0),
-  short_desc: null,
-  content: null,
-  feed_link: null,
-  item_link: null
-});
-
-
-// Visible Item Controller - we never really edit any of the content
-//  in here, it's solely used to decide what we're showing, pulling from
-//  the data controller.
-SuperWebApp_Reader.itemsController = Em.ArrayController.create({
-  // content array for Ember's data
-  content: [],
-
-  // Sets content[] to the filtered results of the data controller
-  filterBy: function(key, value) {
-    this.set('content', SuperWebApp_Reader.dataController.filterProperty(key, value));
-  },
-
-  // Sets content[] to all items in the data controller
-  clearFilter: function() {
-    this.set('content', SuperWebApp_Reader.dataController.get('content'));
-  },
-
-  // Shortcut for filterBy
-  showDefault: function() {
-    this.filterBy('read', false);
-  },
-
-  // Mark all visible items read
-  markAllRead: function() {
-    // Iterate through all items, and set read=true in the item controller
-    // then set read=true in the data store.
-    this.forEach(function(item) {
-      item.set('read', true);
-      store.toggleRead(item.get('item_id'), true);
-    });
-  },
-
-  // A 'property' that returns the count of visible items
-  itemCount: function() {
-    return this.get('length');
-  }.property('@each'),
-
-  // A 'property' that returns the count of read items
-  readCount: function() {
-    return this.filterProperty('read', true).get('length');
-  }.property('@each.read'),
-
-  // A 'property' that returns the count of unread items
-  unreadCount: function() {
-    return this.filterProperty('read', false).get('length');
-  }.property('@each.read'),
-
-  // A 'property' that returns the count of starred items
-  starredCount: function() {
-    return this.filterProperty('starred', true).get('length');
-  }.property('@each.starred')
-
-});
-
 
 SuperWebApp_Reader.dataController = Em.ArrayController.create({
   // content array for Ember's data
@@ -257,18 +181,60 @@ SuperWebApp_Reader.dataController = Em.ArrayController.create({
   // A 'property' that returns the count of starred items
   starredCount: function() {
     return this.filterProperty('starred', true).get('length');
-  }.property('@each.starred'),
-
-  markAllRead: function() {
-    // Iterate through all items, and set read=true in the data controller
-    // then set read=true in the data store.
-    this.forEach(function(item) {
-      item.set('read', true);
-      store.toggleRead(item.get('item_id'), true);
-    });
-  }
+  }.property('@each.starred')
 });
 
+// Visible Item Controller - we never really edit any of the content
+//  in here, it's solely used to decide what we're showing, pulling from
+//  the data controller.
+SuperWebApp_Reader.itemsController = Em.ArrayController.create({
+  // content array for Ember's data
+  content: [],
+
+  // Sets content[] to the filtered results of the data controller
+  filterBy: function(key, value) {
+    this.set('content', SuperWebApp_Reader.dataController.filterProperty(key, value));
+  },
+
+  // Sets content[] to all items in the data controller
+  clearFilter: function() {
+    this.set('content', SuperWebApp_Reader.dataController.get('content'));
+  },
+
+  // Shortcut for filterBy
+  showDefault: function() {
+    this.filterBy('read', false);
+  },
+
+  // Mark all visible items read
+  markAllRead: function() {
+    // Iterate through all items, and set read=true in the item controller
+    this.forEach(function(item) {
+      item.set('read', true);
+    });
+  },
+
+  // A 'property' that returns the count of visible items
+  itemCount: function() {
+    return this.get('length');
+  }.property('@each'),
+
+  // A 'property' that returns the count of read items
+  readCount: function() {
+    return this.filterProperty('read', true).get('length');
+  }.property('@each.read'),
+
+  // A 'property' that returns the count of unread items
+  unreadCount: function() {
+    return this.filterProperty('read', false).get('length');
+  }.property('@each.read'),
+
+  // A 'property' that returns the count of starred items
+  starredCount: function() {
+    return this.filterProperty('starred', true).get('length');
+  }.property('@each.starred')
+
+});
 
 // Selected Item Controller - and provides functionality to hook into
 // all details for a specific item.
@@ -299,11 +265,6 @@ SuperWebApp_Reader.selectedItemController = Em.Object.create({
         this.set('hasPrev', true);
       }
 
-      //TODO: Update the address bar
-      //var url = location.origin + location.pathname + '';
-      //var item_url = "" + item.get('item_id');
-      //history.pushState(item.get('item_id'), 'title', url + item_url);
-
     } else {
       this.set('hasPrev', false);
       this.set('hasNext', false);
@@ -317,7 +278,10 @@ SuperWebApp_Reader.selectedItemController = Em.Object.create({
     }
     this.selectedItem.set('read', read);
     var key = this.selectedItem.get('item_id');
-    store.toggleRead(key, read);
+    store.get(key, function(entry) {
+      entry.read = read;
+      store.save(entry);
+    });
   },
 
   // Toggles or sets the starred status with an optional boolean
@@ -327,7 +291,10 @@ SuperWebApp_Reader.selectedItemController = Em.Object.create({
     }
     this.selectedItem.set('starred', star);
     var key = this.selectedItem.get('item_id');
-    store.toggleStar(key, star);
+    store.get(key, function(entry) {
+      entry.starred = star;
+      store.save(entry);
+    });
   },
 
   // Selects the next item in the item controller
@@ -356,89 +323,6 @@ SuperWebApp_Reader.selectedItemController = Em.Object.create({
     }
   }
 });
-
-
-// A special observer that will watch for when the 'selectedItem' is updated
-// and ensure that we scroll into a view so that the selected item is visible
-// in the summary list view.
-SuperWebApp_Reader.selectedItemController.addObserver('selectedItem', function() {
-  var curScrollPos = $('.summaries').scrollTop();
-  var itemTop = $('.summary.active').offset().top - 60;
-  $(".summaries").animate({"scrollTop": curScrollPos + itemTop}, 200);
-});
-
-// View for the ItemsList
-SuperWebApp_Reader.SummaryListView = Em.View.extend({
-  tagName: 'article',
-
-  classNames: ['well', 'summary'],
-
-  classNameBindings: ['active', 'read', 'prev', 'next'],
-
-  // Handle clicks on item summaries with the same code path that
-  // handles the touch events.
-  click: function(evt) {
-    this.touchEnd(evt);
-  },
-
-  // Handle clicks/touch/taps on an item summary
-  touchEnd: function(evt) {
-    // Figure out what the user just clicked on, then set selectedItemController
-    var content = this.get('content');
-    SuperWebApp_Reader.selectedItemController.select(content);
-  },
-
-  // Enables/Disables the active CSS class
-  active: function() {
-    var selectedItem = SuperWebApp_Reader.selectedItemController.get('selectedItem');
-    var content = this.get('content');
-    if (content === selectedItem) {
-      return true;
-    }
-  }.property('SuperWebApp_Reader.selectedItemController.selectedItem'),
-
-  // Enables/Disables the read CSS class
-  read: function() {
-    var read = this.get('content').get('read');
-    return read;
-  }.property('SuperWebApp_Reader.itemsController.@each.read'),
-
-  // Returns the date in a human readable format
-  formattedDate: function() {
-    var d = this.get('content').get('pub_date');
-    return moment(d).fromNow();
-  }.property('SuperWebApp_Reader.selectedItemController.selectedItem')
-});
-
-
-// View for the Selected Item
-SuperWebApp_Reader.EntryItemView = Em.View.extend({
-  tagName: 'article',
-
-  contentBinding: 'SuperWebApp_Reader.selectedItemController.selectedItem',
-
-  classNames: ['well', 'entry'],
-
-  classNameBindings: ['active', 'read', 'prev', 'next'],
-
-  // Enables/Disables the active CSS class
-  active: function() {
-    return true;
-  }.property('SuperWebApp_Reader.selectedItemController.selectedItem'),
-
-  // Enables/Disables the read CSS class
-  read: function() {
-    var read = this.get('content').get('read');
-    return read;
-  }.property('SuperWebApp_Reader.itemsController.@each.read'),
-
-  // Returns a human readable date
-  formattedDate: function() {
-    var d = this.get('content').get('pub_date');
-    return moment(d).format("MMMM Do YYYY, h:mm a");
-  }.property('SuperWebApp_Reader.selectedItemController.selectedItem')
-});
-
 
 // Top Menu/Nav Bar view
 SuperWebApp_Reader.NavBarView = Em.View.extend({
@@ -485,7 +369,137 @@ SuperWebApp_Reader.NavBarView = Em.View.extend({
   // Click handler for menu bar
   refresh: function() {
     SuperWebApp_Reader.GetItemsFromServer();
+  },
+
+  showAbout: function() {
+    $("#modalAbout").modal({"show":true});
   }
+});
+
+// View for the ItemsList
+SuperWebApp_Reader.SummaryListView = Em.View.extend({
+  //TODO:
+
+  tagName: 'article',
+
+  classNames: ['well', 'summary'],
+
+  classNameBindings: ['read', 'starred', 'active'],
+
+  touchEnd: function(evt) {
+    this.click(evt);
+  },
+
+    // Handle clicks on an item summary
+  click: function(evt) {
+    // Figure out what the user just clicked on, then set selectedItemController
+    var content = this.get('content');
+    SuperWebApp_Reader.selectedItemController.select(content);
+  },
+
+  // Enables/Disables the read CSS class
+  read: function() {
+    var read = this.get('content').get('read');
+    return read;
+  }.property('SuperWebApp_Reader.itemsController.@each.read'),
+
+  // Enables/Disables the read CSS class
+  starred: function() {
+    var starred = this.get('content').get('starred');
+    return starred;
+  }.property('SuperWebApp_Reader.itemsController.@each.starred'),
+
+  // Returns the date in a human readable format
+  formattedDate: function() {
+    var d = this.get('content').get('pub_date');
+    return moment(d).format('MMMM Do, YYYY');
+  }.property('SuperWebApp_Reader.itemsController.@each.pub_date'),
+
+  // Enables/Disables the active CSS class
+  active: function() {
+    var selectedItem = SuperWebApp_Reader.selectedItemController.get('selectedItem');
+    var content = this.get('content');
+    if (content === selectedItem) {
+      return true;
+    }
+  }.property('SuperWebApp_Reader.selectedItemController.selectedItem')
+});
+
+// A special observer that will watch for when the 'selectedItem' is updated
+// and ensure that we scroll into a view so that the selected item is visible
+// in the summary list view.
+SuperWebApp_Reader.selectedItemController.addObserver('selectedItem', function() {
+  var curScrollPos = $('.summaries').scrollTop();
+  var itemTop = $('.summary.active').offset().top - 60;
+  $(".summaries").animate({"scrollTop": curScrollPos + itemTop}, 200);
+});
+
+// View for the Selected Item
+SuperWebApp_Reader.EntryItemView = Em.View.extend({
+  tagName: 'article',
+
+  contentBinding: 'SuperWebApp_Reader.selectedItemController.selectedItem',
+
+  classNames: ['well', 'entry'],
+
+    // Enables/Disables the active CSS class
+  active: function() {
+    return true;
+  }.property('SuperWebApp_Reader.selectedItemController.selectedItem'),
+
+  toggleRead: function() {
+    SuperWebApp_Reader.selectedItemController.toggleRead();
+  },
+
+  toggleStar: function() {
+    SuperWebApp_Reader.selectedItemController.toggleStar();
+  },
+
+  readButtonClass: function() {
+    var selectedItem = SuperWebApp_Reader.selectedItemController.get('selectedItem');
+    if (selectedItem) {
+      if (selectedItem.get('read')) {
+        return 'btn active';
+      }
+    }
+    return 'btn';
+  }.property('SuperWebApp_Reader.selectedItemController.selectedItem.read'),
+
+  starButtonClass: function() {
+    var selectedItem = SuperWebApp_Reader.selectedItemController.get('selectedItem');
+    if (selectedItem) {
+      if (selectedItem.get('starred')) {
+        return 'btn active';
+      }
+    }
+    return 'btn';
+  }.property('SuperWebApp_Reader.selectedItemController.selectedItem.starred'),
+
+  starClass: function() {
+    var selectedItem = SuperWebApp_Reader.selectedItemController.get('selectedItem');
+    if (selectedItem) {
+      if (selectedItem.get('starred')) {
+        return 'icon-star';
+      }
+    }
+    return 'icon-star-empty';
+  }.property('SuperWebApp_Reader.selectedItemController.selectedItem.starred'),
+
+  readClass: function() {
+    var selectedItem = SuperWebApp_Reader.selectedItemController.get('selectedItem');
+    if (selectedItem) {
+      if (selectedItem.get('read')) {
+        return 'icon-ok-sign';
+      }
+    }
+    return 'icon-ok-circle';
+  }.property('SuperWebApp_Reader.selectedItemController.selectedItem.read'),
+
+  // Returns a human readable date
+  formattedDate: function() {
+    var d = this.get('content').get('pub_date');
+    return moment(d).format("MMMM Do YYYY, h:mm a");
+  }.property('SuperWebApp_Reader.selectedItemController.selectedItem')
 });
 
 // Left hand controls view
@@ -493,12 +507,6 @@ SuperWebApp_Reader.NavControlsView = Em.View.extend({
   tagName: 'section',
 
   classNames: ['controls'],
-
-  classNameBindings: ['hide'],
-
-  hide: function() {
-    return false;
-  }.property('SuperWebApp_Reader.settingsController.tabletControls'),
 
   // Click handler for up/previous button
   navUp: function(event) {
@@ -529,7 +537,6 @@ SuperWebApp_Reader.NavControlsView = Em.View.extend({
   refresh: function(event) {
     SuperWebApp_Reader.GetItemsFromServer();
   },
-
 
   starClass: function() {
     var selectedItem = SuperWebApp_Reader.selectedItemController.get('selectedItem');
@@ -563,6 +570,22 @@ SuperWebApp_Reader.NavControlsView = Em.View.extend({
     return true;
   }.property('SuperWebApp_Reader.selectedItemController.selectedItem')
 });
+
+window.applicationCache.addEventListener('updateready', function(e) {
+  if (window.applicationCache.status == window.applicationCache.UPDATEREADY) {
+    $("#modalUpdate").modal({"show":true});
+  }
+}, false);
+
+SuperWebApp_Reader.swapCache = function(value) {
+  if (value === true) {
+    window.applicationCache.swapCache();
+    window.location.reload();
+  } else {
+    $("#modalUpdate").modal('hide');
+  }
+};
+
 
 SuperWebApp_Reader.HandleSpaceKey = function() {
   var itemHeight = $('.entry.active').height() + 60;
@@ -608,10 +631,3 @@ function handleBodyKeyDown(evt) {
       }
     }
 }
-
-function handlePopState(evt) {
-  console.log("Pop State", evt);
-}
-
-document.addEventListener('keydown', handleBodyKeyDown, false);
-window.addEventListener('popstate', handlePopState, false);
