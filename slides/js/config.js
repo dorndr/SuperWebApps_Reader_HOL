@@ -28,7 +28,7 @@ window.slidesConfig = window.slidesConfig || {
     location: '2012',
 
     // Presentation Timer
-    date: new Date('juni 18 2012 17:20'),
+    date: new Date('juni 18 2012 09:00'),
     logo: './images/html5_logo_256.png',
     minutes: 220,
     warnAt: 30
