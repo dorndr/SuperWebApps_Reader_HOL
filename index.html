@@ -12,13 +12,14 @@
     <link href="finalproject/css/bootstrap.css" rel="stylesheet" />
 
     <style type="text/css">
-      body {
-        padding-top: 60px;
-        padding-bottom: 40px;
-      }
-      .sidebar-nav {
-        padding: 9px 0;
-      }
+        body {
+            padding-top: 60px;
+            padding-bottom: 40px;
+        }
+
+        .sidebar-nav {
+            padding: 9px 0;
+        }
     </style>
   </head>
 
@@ -40,10 +41,12 @@
           <a class="brand" href="#">SuperWebApp Hands on labs</a>
           <div class="nav-collapse">
             <ul class="nav">
-              <li><a href="#" target="_blank">#</a></li>
-              <li><a href="slides/index.html" target="_blank">Slides</a></li>
-              <li><a href="finalproject/index.html" target="_blank" >Completed App</a></li>
-              <li><a href="#">#</a></li>
+              
+                <li><a href="slides/index.html" target="_blank">Slides</a></li>
+              
+                <li><a href="finalproject/index.html" target="_blank" >Completed App</a></li>
+                
+
             </ul>
           </div><!--/.nav-collapse -->
         </div>
@@ -76,6 +79,18 @@
               <li><a href="http://momentjs.com/">Moment.js</a></li>
               <li><a href="http://twitter.github.com/bootstrap/">Bootstrap CSS Framework</a></li>
               <li><a href="http://westcoastlogic.com/lawnchair/">LawnChair.js</a></li>
+
+              <li class="nav-header">SuperWebApp Resources</li>
+               <li><a href="http://supermobile.dk/html5/" target="_blank" title="What Beautiful HTML looks like">HTML5</a></li>
+               <li><a href="http://supermobile.dk/opgaver/#slide1" target="_blank" title="WebApps Opgaver (Basic-level)">WebApps Opgaver</a></li>
+               <li><a href="http://supermobile.dk/javascript/learn/" target="_blank" title="JsRender">Learn javascript online</a></li>
+               <li><a href="http://supermobile.dk/javascript/jsrender/html/" target="_blank" title="JsRender">Learn javascript template (MVC)</a></li>
+               
+               <li class="nav-header">Free learning WebApps</li>
+                <li><a href="http://assanka.net/content/what/2011/06/09/ft-launches-first-major-html5-mobile-news-app/" target="_blank" title="First major HTML5 mobile news app">The 2012 Winner WebApp (must see)</a></li>
+                <li><a href="http://supermobile.dk/todo/" target="_blank" title="REST WebApp">Todo WebApp (REST DataService)</a></li>
+             
+
             </ul>
           </div><!--/.well -->
         </div><!--/span-->
@@ -85,7 +100,7 @@
 
 <div class="alert alert-info">
 	<p>
-	<h1>SuperWebApp_Reader Hands on labs</h1>
+	    <h1>SuperWebApp_Reader Hands on labs</h1>
 	</p>
 </div>
 
@@ -1643,15 +1658,17 @@ java -jar ../tools/yuicompressor-2.4.7.jar js/app.js -o js/app.min.js
     <script type="text/javascript" src="docs/prettify.js"></script>
 
     <script type="text/javascript">
-      $("pre").addClass("prettyprint");
-      prettyPrint();
+        $("pre").addClass("prettyprint");
+        prettyPrint();
     </script>
 
     <script>
-      var _gaq=[['_setAccount','UA-29459980-1'],['_trackPageview']];
-      (function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
-      g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
-      s.parentNode.insertBefore(g,s)}(document,'script'));
+        var _gaq = [['_setAccount', 'UA-29459980-1'], ['_trackPageview']];
+        (function (d, t) {
+            var g = d.createElement(t), s = d.getElementsByTagName(t)[0];
+            g.src = ('https:' == location.protocol ? '//ssl' : '//www') + '.google-analytics.com/ga.js';
+            s.parentNode.insertBefore(g, s)
+        }(document, 'script'));
     </script>
 
   </body>

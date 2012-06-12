@@ -24,7 +24,7 @@ window.slidesConfig = window.slidesConfig || {
 
     // Links
     slides: 'https://github.com/superwebapps/SuperWebApps_Reader_HOL/',
-    feedback: 'https://github.com/superwebapps/SuperWebApps_Reader_HOL',
+    feedback: '@JalalHejazi',
     location: '2012',
 
     // Presentation Timer
